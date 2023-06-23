@@ -9,11 +9,12 @@ void main() {
   runApp(MyApp());
 }
 
+
 class MyApp extends StatelessWidget {
   final List<String> items = ['January', 'February', 'March', 'April', 'May'];
 
   // This widget is the root of your application.
-  
+
 
   MyApp({super.key});
   @override
@@ -30,13 +31,13 @@ class MyApp extends StatelessWidget {
           itemBuilder: (context, index) {
             return ListTile(
               title: Text(items[index]),
-          //     //When the child is tapped
+              //     //When the child is tapped
               onTap: () {
                 Navigator.push(context,
-                MaterialPageRoute(builder: (context) =>
-                    MyDetails(items[index])),
-                          );
-                   },
+                  MaterialPageRoute(builder: (context) =>
+                      MyDetails(items[index])),
+                );
+              },
 
             );
           },
@@ -68,31 +69,16 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyDetails extends StatelessWidget {
+class MyDetails extends StatefulWidget {
   final String month;
   const MyDetails(this.month, {super.key});
 
   @override
-  Widget build(BuildContext context) {
-     const title = 'Details Page'  ;
-     return Scaffold(
-       appBar: AppBar(
-         title: const Text(title),
-       ),
-       body: Text('You selected $month')
-     );
-  }
-}
-class MyHomePage extends StatefulWidget {
-
-  const MyHomePage({super.key});
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageSales();
+  State<MyDetails> createState() => _MyDetailsState();
 }
 
-class _MyHomePageSales extends State<MyHomePage> {
-    List<MySalesMonth> chartData = [];
+class _MyDetailsState extends State<MyDetails> {
+  List<MySalesMonth> chartData = [];
 
   Future loadSalesData() async {
     final String jsonString = await getJsonFromAssets();
@@ -105,66 +91,70 @@ class _MyHomePageSales extends State<MyHomePage> {
   Future<String> getJsonFromAssets() async {
     return await rootBundle.loadString('assets/data.json');
   }
-
   @override
   void initState() {
     loadSalesData();
     super.initState();
-
   }
+
   @override
   Widget build(BuildContext context) {
+    const title = 'Details Page';
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Syncfusion Flutter chart'),
+        appBar: AppBar(
+          title: const Text(title),
+        ),
+        body: Center(                                              //Text('You selected $month')
+            child: FutureBuilder(
+                future: getJsonFromAssets(),
+                builder: (context, snapshot){
+                  if (snapshot.hasData) {
+                    return SfCartesianChart(
+                        primaryXAxis: CategoryAxis(),
+                        title: ChartTitle(text: 'Half yearly sales analysis'),
+                        series: <ChartSeries<MySalesMonth, String>>[
+                          LineSeries<MySalesMonth, String>(
+                              dataSource: chartData,
+                              xValueMapper: (MySalesMonth sales, _) => sales.month,
+                              yValueMapper: (MySalesMonth sales, _) => sales.sales
+                            // dataLabelSettings: const DataLabelSettings(isVisible: true))
 
-      ),
-      body: Center(
-        child: FutureBuilder(
-          future: getJsonFromAssets(),
-            builder: (context, snapshot){
-            if (snapshot.hasData) {
-              return SfCartesianChart(
-                primaryXAxis: CategoryAxis(),
-                title: ChartTitle(text: 'Half yearly sales analysis'),
-                series: <ChartSeries<MySalesMonth, String>>[
-                  LineSeries<MySalesMonth, String>(
-                    dataSource: chartData,
-                    xValueMapper: (MySalesMonth sales, _) => sales.month,
-                    yValueMapper: (MySalesMonth sales, _) => sales.sales
-                    // dataLabelSettings: const DataLabelSettings(isVisible: true))
+                          )
+                        ]);
+                  } else {
+                    return Card(
+                      elevation: 5.0,
+                      child: SizedBox(
+                        height: 100,
+                        width: 400,
+                        child: Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              const Text('retrieving JSON DATA...',
+                                  style: TextStyle(fontSize: 20.0)),
+                              SizedBox(
+                                height: 40,
+                                width: 40,
+                                child: CircularProgressIndicator(
+                                  semanticsLabel: 'Retrieving JSON DATA',
+                                  valueColor: const AlwaysStoppedAnimation<Color>(
+                                      Colors.blueAccent),
+                                  backgroundColor: Colors.grey[300],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                }
 
-                  )
-                ]);
-            } else {
-              return Card(
-                elevation: 5.0,
-                  child: SizedBox(
-                    height: 100,
-                    width: 400,
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            const Text('retrieving JSON DATA...',
-                            style: TextStyle(fontSize: 20.0)),
-                            SizedBox(
-                               height: 40,
-                               width: 40,
-                               child: CircularProgressIndicator(
-                                 semanticsLabel: 'Retrieving JSON DATA',
-                                 valueColor: const AlwaysStoppedAnimation<Color>(
-                                    Colors.blueAccent),
-                                 backgroundColor: Colors.grey[300],
-                               ),
-                             ),
-                          ],
-                       ),
-                     ),
-                  ),
-              );
-            }
-            })));
+            )
+        )
+    );
+
   }
 }
 
