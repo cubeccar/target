@@ -9,7 +9,6 @@ void main() {
   runApp(MyApp());
 }
 
-
 class MyApp extends StatelessWidget {
   final List<String> items = ['January', 'February', 'March', 'April', 'May'];
 
@@ -69,16 +68,31 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyDetails extends StatefulWidget {
+class MyDetails extends StatelessWidget {
   final String month;
   const MyDetails(this.month, {super.key});
 
   @override
-  State<MyDetails> createState() => _MyDetailsState();
+  Widget build(BuildContext context) {
+     const title = 'Details Page'  ;
+     return Scaffold(
+       appBar: AppBar(
+         title: const Text(title),
+       ),
+       body: Text('You selected $month')
+     );
+  }
+}
+class MyHomePage extends StatefulWidget {
+
+  const MyHomePage({super.key});
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageSales();
 }
 
-class _MyDetailsState extends State<MyDetails> {
-  List<MySalesMonth> chartData = [];
+class _MyHomePageSales extends State<MyHomePage> {
+    List<MySalesMonth> chartData = [];
 
   Future loadSalesData() async {
     final String jsonString = await getJsonFromAssets();
@@ -91,70 +105,66 @@ class _MyDetailsState extends State<MyDetails> {
   Future<String> getJsonFromAssets() async {
     return await rootBundle.loadString('assets/data.json');
   }
+
   @override
   void initState() {
     loadSalesData();
     super.initState();
-  }
 
+  }
   @override
   Widget build(BuildContext context) {
-     const title = 'Details Page';
-     return Scaffold(
-       appBar: AppBar(
-         title: const Text(title),
-       ),
-       body: Center(                                              //Text('You selected $month')
-         child: FutureBuilder(
-           future: getJsonFromAssets(),
-              builder: (context, snapshot){
-                if (snapshot.hasData) {
-                    return SfCartesianChart(
-                    primaryXAxis: CategoryAxis(),
-                    title: ChartTitle(text: 'Half yearly sales analysis'),
-                    series: <ChartSeries<MySalesMonth, String>>[
-                    LineSeries<MySalesMonth, String>(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Syncfusion Flutter chart'),
+
+      ),
+      body: Center(
+        child: FutureBuilder(
+          future: getJsonFromAssets(),
+            builder: (context, snapshot){
+            if (snapshot.hasData) {
+              return SfCartesianChart(
+                primaryXAxis: CategoryAxis(),
+                title: ChartTitle(text: 'Half yearly sales analysis'),
+                series: <ChartSeries<MySalesMonth, String>>[
+                  LineSeries<MySalesMonth, String>(
                     dataSource: chartData,
                     xValueMapper: (MySalesMonth sales, _) => sales.month,
                     yValueMapper: (MySalesMonth sales, _) => sales.sales
                     // dataLabelSettings: const DataLabelSettings(isVisible: true))
 
                   )
-                 ]);
-                } else {
-                    return Card(
-                        elevation: 5.0,
-                        child: SizedBox(
-                            height: 100,
-                            width: 400,
-                            child: Center(
-                              child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                    children: [
-                                      const Text('retrieving JSON DATA...',
-                                      style: TextStyle(fontSize: 20.0)),
-                                      SizedBox(
-                                          height: 40,
-                                          width: 40,
-                                          child: CircularProgressIndicator(
-                                            semanticsLabel: 'Retrieving JSON DATA',
-                                            valueColor: const AlwaysStoppedAnimation<Color>(
-                                                Colors.blueAccent),
-                                            backgroundColor: Colors.grey[300],
-                                           ),
-                                      ),
-                                     ],
-                              ),
-                            ),
-                        ),
-                    );
-                }
-           }
-
-         )
-     )
-    );
-
+                ]);
+            } else {
+              return Card(
+                elevation: 5.0,
+                  child: SizedBox(
+                    height: 100,
+                    width: 400,
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            const Text('retrieving JSON DATA...',
+                            style: TextStyle(fontSize: 20.0)),
+                            SizedBox(
+                               height: 40,
+                               width: 40,
+                               child: CircularProgressIndicator(
+                                 semanticsLabel: 'Retrieving JSON DATA',
+                                 valueColor: const AlwaysStoppedAnimation<Color>(
+                                    Colors.blueAccent),
+                                 backgroundColor: Colors.grey[300],
+                               ),
+                             ),
+                          ],
+                       ),
+                     ),
+                  ),
+              );
+            }
+            })));
   }
 }
 
