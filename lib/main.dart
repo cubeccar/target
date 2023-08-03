@@ -1,7 +1,15 @@
+
+//Login Screen with validation
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:provider/provider.dart';
+import 'package:window_size/window_size.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 
@@ -9,6 +17,21 @@ void main() {
   runApp(MyApp());
 }
 
+void setupWindow() {
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    WidgetsFlutterBinding.ensureInitialized();
+    setWindowTitle('Infinite List');
+    setWindowMinSize(const Size(windowWidth, windowHeight));
+    setWindowMaxSize(const Size(windowWidth, windowHeight));
+    getCurrentScreen().then((screen) {
+      setWindowFrame(Rect.fromCenter(
+        center: screen!.frame.center,
+        width: windowWidth,
+        height: windowHeight,
+      ));
+    });
+  }
+}
 
 class MyApp extends StatelessWidget {
   final List<String> items = ['January', 'February', 'March', 'April', 'May'];
@@ -25,49 +48,46 @@ class MyApp extends StatelessWidget {
       home: Scaffold(
         appBar: AppBar(
           title: const Text(title),
-        ),
-        body: ListView.builder(
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              title: Text(items[index]),
-              //     //When the child is tapped
-              onTap: () {
-                Navigator.push(context,
-                  MaterialPageRoute(builder: (context) =>
-                      MyDetails(items[index])),
-                );
-              },
-
+          actions: <Widget>[
+          FlatButton(
+            onPressed: () {
+              sharedPreferences.clear();
+              sharedPreferences.commit();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (BuildContext context) => LoginPage()), (Route<dynamic> route) => false);
+            },
+            child: Text("Log Out", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+      body: ListView.builder(
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(items[index]),
+            //     //When the child is tapped
+            onTap: () {
+              Navigator.push(context,
+                MaterialPageRoute(builder: (context) =>
+                    MyDetails(items[index])),
+              );
+             },
             );
           },
         ),
-      ),
-
-
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
+
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+      routes: {
+        '/': (context) => const MyDetails(),
+      },
 
     );
   }
 }
+
 
 class MyDetails extends StatefulWidget {
   final String month;
@@ -93,8 +113,17 @@ class _MyDetailsState extends State<MyDetails> {
   }
   @override
   void initState() {
-    loadSalesData();
+    // loadSalesData();
+    checkLoginStatus();
     super.initState();
+  }
+
+  checkLoginStatus() async {
+    sharedPreferences = await SharedPreferences.getInstance();
+    if(sharedPreferences.getString("token") == null) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (BuildContext context) => LoginPage()), (Route<dynamic> route) => false);
+    }
   }
 
   @override
